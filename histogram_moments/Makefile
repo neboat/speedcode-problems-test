@@ -8,7 +8,7 @@ ifeq ($(SPEEDCODE_SERVER), 1)
 	OUTPUT_PREFIX = /box
 	SANDBOX_PREFIX = /sandbox
 else
-	UTILS_DIR=../sandbox_utils
+	UTILS_DIR=../.sandbox_utils
 	EXTRA_CFLAGS = -O3 -I$(UTILS_DIR)/include
 	OUTPUT_PREFIX = .
 	SANDBOX_PREFIX = .
