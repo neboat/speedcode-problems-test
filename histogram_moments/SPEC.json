@@ -1,7 +1,10 @@
 {'name': 'Histogram Moments',
-'name_url': 'histogram-moments',
-'directory': 'histogram_moments',
+'const_id': 'histogram_moments',
+'title': 'Histogram of Moments',
+'location': 'histogram_moments',
+'github_url': 'git@github.com:SpeedCodeOrg/speedcode-problems.git',
 'short_description': 'Compute a histogram of k moments from an array of floating point numbers.',
 'max_tiers': 2,
 'tier_benchmark': "[tier1],[tier2]",
+'public': True,
 'tags': '#getting-started,#memoization,#sequential-code'}
