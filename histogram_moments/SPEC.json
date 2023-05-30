@@ -1,0 +1,7 @@
+{'name': 'Histogram Moments',
+'name_url': 'histogram-moments',
+'directory': 'histogram_moments',
+'short_description': 'Compute a histogram of k moments from an array of floating point numbers.',
+'max_tiers': 2,
+'tier_benchmark': "[tier1],[tier2]",
+'tags': '#getting-started,#memoization,#sequential-code'}
