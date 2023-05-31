@@ -91,7 +91,7 @@ const uint8_t* original_solution_tier4(uint8_t needle, const uint8_t* start, con
 }
 
 
-TEST_CASE("Tiers", "[correctness],[tiers]") {
+TEST_CASE("Tiers", "[correctness],[tier1]") {
   size_t N = 10000*16;
   std::vector<uint8_t> data(N);
   ankerl::nanobench::Rng rng;
