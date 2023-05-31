@@ -1,0 +1,10 @@
+{'name': 'Find zero byte',
+'const_id': 'find-zero-byte',
+'title': 'Find zero byte',
+'location': 'find-zero-byte',
+'github_url': 'git@github.com:SpeedCodeOrg/speedcode-problems.git',
+'short_description': 'Find the zero byte in an array of bytes.',
+'max_tiers': 1,
+'tier_benchmark': "[tier1]",
+'public': True,
+'tags': '#getting-started,#bit-tricks,#sequential-code,#vectorization'}
