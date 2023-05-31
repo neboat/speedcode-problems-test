@@ -1,0 +1,10 @@
+{'name': 'merge-sorted-arrays',
+'const_id': 'merge-sorted-arrays',
+'title': 'Merge two sorted arrays',
+'location': 'merge-sorted-arrays',
+'github_url': 'git@github.com:SpeedCodeOrg/speedcode-problems.git',
+'short_description': 'Merge two sorted arrays.',
+'max_tiers': 3,
+'tier_benchmark': "[correctness]",
+'public': True,
+'tags': '#sequential-code,#advanced-vectorization,#precomputation,#meta-programming'}

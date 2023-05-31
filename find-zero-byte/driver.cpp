@@ -97,10 +97,10 @@ TEST_CASE("Tiers", "[correctness],[tier1]") {
   ankerl::nanobench::Rng rng;
   size_t range = 4096;
   for (int i = 0; i < N; i++) {
-     data[i] = 1+rng.bounded(254);
-     if (rng.bounded(range) == 0 ) {
-       data[i] = 0;
-     }
+     data[i] = rng.bounded(256);
+     //if (rng.bounded(range) == 0 ) {
+     //  data[i] = 0;
+     //}
      //if (i == N/2) data[i] = 0;
   }
   auto reference = original_solution_tier1;
