@@ -1,4 +1,4 @@
-# Build a histogram of moments
+# Merge two sorted arrays
 
 ## Problem
 

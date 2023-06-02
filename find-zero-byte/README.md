@@ -1,28 +1,19 @@
-# Build a histogram of moments
+# Find zero byte
 
 ## Problem
 
-Given an array of floating point numbers, and an integer ``k``, compute a
-histogram of length ``k`` containing the ``k`` moments of the input.
-
-
-
+Given an array of bytes, return a pointer to the first zero byte in the array. 
+IF there is no zero byte in the array, return ``nullptr``.
 
 
 ## Example
 
-Input: ``data=[0.5 0.1 0.2 0.2], K = 3``
-
-Output: ``histogram=[4.0, 1.0, 0.34]``
+TODO
  
 
 ### Explanation 
 
-The ``0``th moment is equal to the total number of elements in ``data``. The
-``1``st moment is the sum of all elements in ``data``, which is equal to
-``1.0``. The ``2``nd moment is the sum of the squared values of the elements in
-data which is ``sum([0.25, 0.01, 0.04, 0.04]) = 0.34``.
-
+TODO
 
 
 
@@ -30,3 +21,8 @@ data which is ``sum([0.25, 0.01, 0.04, 0.04]) = 0.34``.
 
 * Your code must be written in C/C++.
 
+## Hints
+
+* Consider using a bit-trick for finding the first zero byte in a 32-bit word. A good reference for such bit-tricks is [Bit Twiddling Hacks](https://graphics.stanford.edu/~seander/bithacks.html)
+* Try extending the bit-trick to 64-bit words.
+* It is possible to use vector instructions to find the first zero byte in a 128-bit word
