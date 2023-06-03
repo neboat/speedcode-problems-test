@@ -81,7 +81,7 @@ const uint8_t* original_solution_tier3(uint8_t needle, const uint8_t* start, con
 const uint8_t* original_solution_tier4(uint8_t needle, const uint8_t* start, const uint8_t* end) {
 	__m128i needles = _mm_set1_epi8(needle);
 	for (; start < end; start += 16) {
-		__m128i haystck = _mm_loadu_si128(reinterpret_cast<const __m128i*>(start));
+		__m128i haystack = _mm_loadu_si128(reinterpret_cast<const __m128i*>(start));
 		int mask = _mm_movemask_epi8(_mm_cmpeq_epi8(needles, haystack));
 		if (mask != 0) {
 			return start + __builtin_ctzl(mask);
