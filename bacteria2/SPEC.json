@@ -1,0 +1,10 @@
+{'name': 'Bacteria',
+'const_id': 'bacteria',
+'title': 'Bacterua',
+'location': 'bacteria2',
+'github_url': 'git@github.com:SpeedCodeOrg/speedcode-problems.git',
+'short_description': 'Compute where the bacteria will spread.',
+'max_tiers': 2,
+'tier_benchmark': "[correctness],[tiers]",
+'public': True,
+'tags': '#sequential-code,#parallel-code'}
