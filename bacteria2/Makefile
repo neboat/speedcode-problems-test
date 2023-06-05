@@ -1,58 +1,65 @@
-#$OPENCILK_COMPILER_DIR/bin/clang++ -c -fopencilk -stdlib=libstdc++ `/bin/python3 /sandbox/get_copts.py3` `pkg-config --cflags catch2-with-main` /sandbox/driver.cpp -I/home/tfk/miniconda3/envs/speedcode-proto/include -o /box/driver.o
+###########################################################################
+# Compilation and linking flags
 
-#$OPENCILK_COMPILER_DIR/bin/clang++ /box/driver.o -fopencilk -stdlib=libstdc++ `pkg-config --libs catch2-with-main` -o /box/tmp
-
+COMMON_CXXFLAGS=-fopencilk -g -gdwarf-4 `pkg-config --cflags catch2-with-main` -I${CONDA_PREFIX}/include
 
 ifeq ($(SPEEDCODE_SERVER), 1)
-	EXTRA_CFLAGS = `/bin/python3 ${UTILS_DIR}/get_copts.py3` -I$(UTILS_DIR)/include
+	SANDBOX_CXXFLAGS = `/bin/python3 ${UTILS_DIR}/get_copts.py3` -I$(UTILS_DIR)/include
 	OUTPUT_PREFIX = /box
 	SANDBOX_PREFIX = /sandbox
 else
 	UTILS_DIR=../.sandbox_utils
-	EXTRA_CFLAGS = -O3 -I$(UTILS_DIR)/include
+	SANDBOX_CXXFLAGS = -O3 -I$(UTILS_DIR)/include
 	OUTPUT_PREFIX = .
 	SANDBOX_PREFIX = .
 endif
 
 CXX=${OPENCILK_COMPILER_DIR}/bin/clang++
-CXXFLAGS=-fopencilk -g -gdwarf-4 $(EXTRA_CFLAGS) `pkg-config --cflags catch2-with-main` -I${CONDA_PREFIX}/include
-CILKFLAGS= -O3
-LDFLAGS= -fopencilk -g -O3 `pkg-config --libs catch2-with-main`
+CXXFLAGS=$(COMMON_CXXFLAGS) $(SANDBOX_CXXFLAGS)
+LDFLAGS=-fopencilk `pkg-config --libs catch2-with-main`
+
+CILKSAN_CXXFLAGS=-fsanitize=cilk
+CILKSAN_LDFLAGS=-fsanitize=cilk
+CILKSCALE_CXXFLAGS=-fcilktool=cilkscale
+CILKSCALE_LDFLAGS=-fcilktool=cilkscale
+
+%.cilksan : CXXFLAGS+=$(CILKSAN_CXXFLAGS)
+%.cilksan : LDFLAGS+=$(CILKSAN_LDFLAGS)
+%.cilkscale : CXXFLAGS+=$(CILKSCALE_CXXFLAGS)
+%.cilkscale : LDFLAGS+=$(CILKSCALE_LDFLAGS)
+
+.PHONY : all clean run tiers correctness run-cilksan run-cilkscale
 
 all: tmp
 
+###########################################################################
+# Rules for building object files from sources
+
 # To avoid rebuilding common library, we assume its prebuilt in a directory sandbox has read access to.
 $(UTILS_DIR)/lib/nanobench.o : $(UTILS_DIR)/include/nanobench.cpp
-	$(CXX) $(EXTRA_CFLAGS) -g -gdwarf-4 -c $(UTILS_DIR)/include/nanobench.cpp -o $@
+	@mkdir -p $(@D)
+	$(CXX) $(SANDBOX_CXXFLAGS) -g -gdwarf-4 -c $^ -o $@
 
 $(OUTPUT_PREFIX)/%.o : $(SANDBOX_PREFIX)/%.cpp
 	$(CXX) $^ -c $(CXXFLAGS) -o $@
 
-# $(OUTPUT_PREFIX)/solution.o : $(SANDBOX_PREFIX)/solution.cpp
-# 	$(CXX) $(SANDBOX_PREFIX)/solution.cpp -c $(CFLAGS) -o $@
+$(OUTPUT_PREFIX)/%.o.cilksan : $(SANDBOX_PREFIX)/%.cpp
+	$(CXX) $^ -c $(CXXFLAGS) -o $@
+
+$(OUTPUT_PREFIX)/%.o.cilkscale : $(SANDBOX_PREFIX)/%.cpp
+	$(CXX) $^ -c $(CXXFLAGS) -o $@
+
+###########################################################################
+# Rules for builing executables from object files
 
 $(OUTPUT_PREFIX)/tmp : $(OUTPUT_PREFIX)/driver.o $(OUTPUT_PREFIX)/solution.o $(UTILS_DIR)/lib/nanobench.o
-	$(CXX) $(OUTPUT_PREFIX)/driver.o $(OUTPUT_PREFIX)/solution.o $(UTILS_DIR)/lib/nanobench.o $(LDFLAGS) -o $@
+	$(CXX) $^ $(LDFLAGS) -o $@
 
-#$(OUTPUT_PREFIX)/driver.o.cilksan : $(SANDBOX_PREFIX)/driver.cpp
-#	$(CC) $(SANDBOX_PREFIX)/driver.cpp -c $(CFLAGS) -fsanitize=cilk -o $@
-#
-#$(OUTPUT_PREFIX)/driver.o.cilkscale : $(SANDBOX_PREFIX)/driver.cpp
-#	$(CC) $(SANDBOX_PREFIX)/driver.cpp -c $(CFLAGS) -fcilktool=cilkscale -o $@
-#
-#$(OUTPUT_PREFIX)/solution.o.cilksan : $(SANDBOX_PREFIX)/solution.cpp
-#	$(CC) $(SANDBOX_PREFIX)/solution.cpp -c $(CFLAGS) -fsanitize=cilk -o $@
-#
-#$(OUTPUT_PREFIX)/solution.o.cilkscale : $(SANDBOX_PREFIX)/solution.cpp
-#	$(CC) $(SANDBOX_PREFIX)/solution.cpp -c $(CFLAGS) -fcilktool=cilkscale -o $@
-#
-#
-#$(OUTPUT_PREFIX)/tmp.cilksan: $(OUTPUT_PREFIX)/driver.o $(OUTPUT_PREFIX)/solution.o.cilksan
-#	$(CC) $(OUTPUT_PREFIX)/driver.o $(OUTPUT_PREFIX)/solution.o.cilksan $(LDFLAGS) -fsanitize=cilk -o $@
-#
-#$(OUTPUT_PREFIX)/tmp.cilkscale: $(OUTPUT_PREFIX)/driver.o.cilkscale $(OUTPUT_PREFIX)/solution.o.cilkscale
-#	$(CC) $(OUTPUT_PREFIX)/driver.o.cilkscale $(OUTPUT_PREFIX)/solution.o.cilkscale $(LDFLAGS) -fcilktool=cilkscale -o $@
+$(OUTPUT_PREFIX)/tmp% : $(OUTPUT_PREFIX)/driver.o% $(OUTPUT_PREFIX)/solution.o% $(UTILS_DIR)/lib/nanobench.o
+	$(CXX) $^ $(LDFLAGS) -o $@
 
+###########################################################################
+# Phony rules for running different tests
 
 run : $(OUTPUT_PREFIX)/tmp
 	LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${CONDA_PREFIX}/lib:${OPENCILK_COMPILER_DIR}/lib $(OUTPUT_PREFIX)/tmp ${EXTRA_ARGUMENTS}
@@ -65,28 +72,13 @@ correctness : $(OUTPUT_PREFIX)/tmp
 
 
 
-run-cilksan : $(OUTPUT_PREFIX)/tmp
-	LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${CONDA_PREFIX}/lib:${OPENCILK_COMPILER_DIR}/lib $(OUTPUT_PREFIX)/tmp.cilksan ${EXTRA_ARGUMENTS}
+run-cilksan : $(OUTPUT_PREFIX)/tmp.cilksan
+	LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${CONDA_PREFIX}/lib:${OPENCILK_COMPILER_DIR}/lib $(OUTPUT_PREFIX)/tmp.cilksan [correctness] ${EXTRA_ARGUMENTS}
 
-run-cilkscale : $(OUTPUT_PREFIX)/tmp
+run-cilkscale : $(OUTPUT_PREFIX)/tmp.cilkscale
 	LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${CONDA_PREFIX}/lib:${OPENCILK_COMPILER_DIR}/lib $(OUTPUT_PREFIX)/tmp.cilkscale ${EXTRA_ARGUMENTS}
 
 
 
 clean :
-	rm -f $(OUTPUT_PREFIX)/driver.o $(OUTPUT_PREFIX)/solution.o $(OUTPUT_PREFIX)/*.o.* $(OUTPUT_PREFIX)/*.o $(OUTPUT_PREFIX)/tmp $(OUTPUT_PREFIX)/tmp.* ${OUTPUT_PREFIX}/result.tap  ${OUTPUT_PREFIX}/result.xml ${OUTPUT_PREFIX}/tier*.json
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	rm -f $(OUTPUT_PREFIX)/%.o $(OUTPUT_PREFIX)/*.o* $(OUTPUT_PREFIX)/tmp $(OUTPUT_PREFIX)/tmp.* ${OUTPUT_PREFIX}/result.tap  ${OUTPUT_PREFIX}/result.xml ${OUTPUT_PREFIX}/tier*.json *~
