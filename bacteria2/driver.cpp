@@ -5,6 +5,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <random>
 #include <sys/time.h>
 #include <unistd.h>
 #include <vector>
@@ -62,6 +63,8 @@ TEST_CASE("Correctness", "[correctness]") {
       "_matrices/test4.in", "_matrices/test5.in"};
 
   for (std::string input : test_inputs) {
+    CAPTURE(input);
+
     // Open input file
     std::FILE *fp = std::fopen(input.c_str(), "r");
     if (!fp)
@@ -96,6 +99,7 @@ TEST_CASE("Correctness", "[correctness]") {
     // reference.
     for (int i = 0; i < N; ++i) {
       for (int j = 0; j < N; ++j) {
+	CAPTURE(i, j, B_ref[i][j], B[i][j]);
 	REQUIRE(B_ref[i][j] == B[i][j]);
       }
     }
@@ -112,6 +116,84 @@ TEST_CASE("Correctness", "[correctness]") {
   }
 }
 
-TEST_CASE("Tiers", "[tiers]") {
-  
+const int TIER_TIMEOUT_MS = 200;
+const int NUM_EPOCHS = 3;
+const std::chrono::nanoseconds MAX_BENCH_TIME =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::milliseconds(TIER_TIMEOUT_MS * 2));
+
+struct input_t {
+  const int MAX_N = 1 << 16;
+  int N = 0;
+  int **A = nullptr;
+  int **B = nullptr;
+
+  input_t(int _N = 32) : N(_N) {
+    std::random_device dev;
+    ankerl::nanobench::Rng rng(dev());
+    std::uniform_int_distribution<int> distrib(0, 999);
+
+    A = new int*[MAX_N];
+    B = new int*[MAX_N];
+    for (int i = 0; i < MAX_N; ++i) {
+      A[i] = new int[MAX_N];
+      B[i] = new int[MAX_N];
+
+      // Randomly initialize A.
+      for (int j = 0; j < MAX_N; ++j) {
+	A[i][j] = distrib(rng);
+      }
+    }
+  }
+  ~input_t() {
+    for (int i = 0; i < MAX_N; ++i) {
+      delete[] A[i];
+      delete[] B[i];
+    }
+    delete[] A;
+    delete[] B;
+  }
+
+  bool grow_input() {
+    N *= 2;
+    return N <= MAX_N;
+  }
+
+  void run() { solution_entry(A, B, N); }
+};
+
+TEST_CASE("Tiers", "[tier1]") {
+  input_t input;
+
+  ankerl::nanobench::Bench b;
+  b.epochs(NUM_EPOCHS);
+  // b.maxEpochTime(MAX_BENCH_TIME);
+
+  int tier = 1;
+  while (true) {
+    b.run(std::to_string(input.N).c_str(), [&]() { input.run(); });
+
+    const std::vector<ankerl::nanobench::Result> results = b.results();
+    double result =
+        results[tier - 1].median(ankerl::nanobench::Result::Measure::elapsed);
+
+    if (result > std::chrono::duration<double>(
+                     std::chrono::milliseconds(TIER_TIMEOUT_MS))
+                     .count())
+      break;
+
+    ++tier;
+    if (!input.grow_input()) {
+      printf("Maximum tier reached!\n");
+      break;
+    }
+  }
+
+  ankerl::nanobench::render(
+      "{{#result}} {{title}} {{median(elapsed)}} {{median(pagefaults)}} "
+      "{{median(branchinstructions)}} {{median(branchmisses)}}\n",
+      b, std::cout);
+  std::string filename{"tier1.json"};
+  std::fstream s{filename, s.trunc | s.in | s.out};
+  ankerl::nanobench::render(ankerl::nanobench::templates::json(), b, s);
 }

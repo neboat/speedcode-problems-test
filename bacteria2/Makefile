@@ -8,16 +8,14 @@ ifeq ($(SPEEDCODE_SERVER), 1)
 	OUTPUT_PREFIX = /box
 	SANDBOX_PREFIX = /sandbox
 else
-# 	UTILS_DIR=../sandbox_utils
-	UTILS_DIR=$(HOME)/speedcode-proto/sandbox_utils
+	UTILS_DIR=../.sandbox_utils
 	EXTRA_CFLAGS = -O3 -I$(UTILS_DIR)/include
 	OUTPUT_PREFIX = .
 	SANDBOX_PREFIX = .
 endif
 
-CC=${OPENCILK_COMPILER_DIR}/bin/clang++
-CFLAGS=-fopencilk -stdlib=libstdc++ -g $(EXTRA_CFLAGS) `pkg-config --cflags catch2-with-main` -I${CONDA_PREFIX}/include
-CILK=clang++
+CXX=${OPENCILK_COMPILER_DIR}/bin/clang++
+CXXFLAGS=-fopencilk -g -gdwarf-4 $(EXTRA_CFLAGS) `pkg-config --cflags catch2-with-main` -I${CONDA_PREFIX}/include
 CILKFLAGS= -O3
 LDFLAGS= -fopencilk -g -O3 `pkg-config --libs catch2-with-main`
 
@@ -25,16 +23,16 @@ all: tmp
 
 # To avoid rebuilding common library, we assume its prebuilt in a directory sandbox has read access to.
 $(UTILS_DIR)/lib/nanobench.o : $(UTILS_DIR)/include/nanobench.cpp
-	$(CC) -O3 $(EXTRA_CFLAGS) -c $(UTILS_DIR)/include/nanobench.cpp -o $@
+	$(CXX) $(EXTRA_CFLAGS) -g -gdwarf-4 -c $(UTILS_DIR)/include/nanobench.cpp -o $@
 
-$(OUTPUT_PREFIX)/driver.o : $(SANDBOX_PREFIX)/driver.cpp
-	$(CC) $(SANDBOX_PREFIX)/driver.cpp -c $(CFLAGS) -o $@
+$(OUTPUT_PREFIX)/%.o : $(SANDBOX_PREFIX)/%.cpp
+	$(CXX) $^ -c $(CXXFLAGS) -o $@
 
-$(OUTPUT_PREFIX)/solution.o : $(SANDBOX_PREFIX)/solution.cpp
-	$(CC) $(SANDBOX_PREFIX)/solution.cpp -c $(CFLAGS) -o $@
+# $(OUTPUT_PREFIX)/solution.o : $(SANDBOX_PREFIX)/solution.cpp
+# 	$(CXX) $(SANDBOX_PREFIX)/solution.cpp -c $(CFLAGS) -o $@
 
 $(OUTPUT_PREFIX)/tmp : $(OUTPUT_PREFIX)/driver.o $(OUTPUT_PREFIX)/solution.o $(UTILS_DIR)/lib/nanobench.o
-	$(CC) $(OUTPUT_PREFIX)/driver.o $(OUTPUT_PREFIX)/solution.o $(UTILS_DIR)/lib/nanobench.o $(LDFLAGS) -o $@
+	$(CXX) $(OUTPUT_PREFIX)/driver.o $(OUTPUT_PREFIX)/solution.o $(UTILS_DIR)/lib/nanobench.o $(LDFLAGS) -o $@
 
 #$(OUTPUT_PREFIX)/driver.o.cilksan : $(SANDBOX_PREFIX)/driver.cpp
 #	$(CC) $(SANDBOX_PREFIX)/driver.cpp -c $(CFLAGS) -fsanitize=cilk -o $@
