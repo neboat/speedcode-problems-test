@@ -78,11 +78,6 @@ TEST_CASE("Correctness", "[correctness]") {
     A = new int[N*N];
     B = new int[N*N];
     B_ref = new int[N*N];
-    // for (int i = 0; i < N; ++i) {
-    //   A[i] = new int[N];
-    //   B[i] = new int[N];
-    //   B_ref[i] = new int[N];
-    // }
 
     // Read the input matrix
     readInput(fp, N, A);
@@ -103,11 +98,6 @@ TEST_CASE("Correctness", "[correctness]") {
     }
 
     // Free the matrices.
-    // for (int i = 0; i < N; ++i) {
-    //   delete[] A[i];
-    //   delete[] B[i];
-    //   delete[] B_ref[i];
-    // }
     delete[] A;
     delete[] B;
     delete[] B_ref;
@@ -121,7 +111,7 @@ const std::chrono::nanoseconds MAX_BENCH_TIME =
         std::chrono::milliseconds(TIER_TIMEOUT_MS * 2));
 
 struct input_t {
-  const int MAX_N = 1 << 14;
+  const int MAX_N = 1 << 13;
   int64_t N = 0;
   int *A = nullptr;
   int *B = nullptr;
@@ -133,21 +123,15 @@ struct input_t {
 
     A = new int[MAX_N * MAX_N];
     B = new int[MAX_N * MAX_N];
-    for (int64_t i = 0; i < MAX_N; ++i) {
-      // A[i] = new int[MAX_N];
-      // B[i] = new int[MAX_N];
 
-      // Randomly initialize A.
+    // Randomly initialize A.
+    for (int64_t i = 0; i < MAX_N; ++i) {
       for (int64_t j = 0; j < MAX_N; ++j) {
 	A[i * N + j] = distrib(rng);
       }
     }
   }
   ~input_t() {
-    // for (int i = 0; i < MAX_N; ++i) {
-    //   delete[] A[i];
-    //   delete[] B[i];
-    // }
     delete[] A;
     delete[] B;
   }
@@ -157,7 +141,16 @@ struct input_t {
     return N <= MAX_N;
   }
 
-  void run() { solution_entry(A, B, N); }
+  void run() {
+    solution_entry(A, B, N);
+    solution_entry(B, A, N);
+    solution_entry(A, B, N);
+    solution_entry(B, A, N);
+    solution_entry(A, B, N);
+    solution_entry(B, A, N);
+    solution_entry(A, B, N);
+    solution_entry(B, A, N);
+  }
 };
 
 TEST_CASE("Tiers", "[tier1]") {
