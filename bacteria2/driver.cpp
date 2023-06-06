@@ -65,9 +65,9 @@ TEST_CASE("Correctness", "[correctness]") {
 
     // Open input file
     std::FILE *fp = std::fopen(input.c_str(), "r");
+    CAPTURE(strerror(errno));
     if (!fp)
       std::perror((std::string("Failed to open file ") + input).c_str());
-    CAPTURE(strerror(errno));
     REQUIRE(fp);
 
     // Get the matrix size from the input file.
