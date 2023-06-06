@@ -121,7 +121,7 @@ const std::chrono::nanoseconds MAX_BENCH_TIME =
         std::chrono::milliseconds(TIER_TIMEOUT_MS * 2));
 
 struct input_t {
-  const int MAX_N = 1 << 14;
+  const int MAX_N = 1 << 13;
   int N = 0;
   int **A = nullptr;
   int **B = nullptr;
