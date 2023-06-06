@@ -18,7 +18,7 @@
 
 #include "./solution.hpp"
 
-static void moveAndSpread_reference(const int *const *A, int **B, int N) {
+static void solution_reference(const int *const *A, int **B, int N) {
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
       B[i][j] = 0;
@@ -39,11 +39,9 @@ static void fast_input(std::FILE *fp, int *int_input) {
   *int_input = 0;
   char next_char = 0;
   while (next_char < '0' || next_char > '9') // Skip non-digits
-    // next_char = getchar();
     next_char = std::fgetc(fp);
   while (next_char >= '0' && next_char <= '9') {
     (*int_input) = ((*int_input) << 1) + ((*int_input) << 3) + next_char - '0';
-    // next_char = getchar();
     next_char = std::fgetc(fp);
   }
 }
@@ -92,7 +90,7 @@ TEST_CASE("Correctness", "[correctness]") {
     std::fclose(fp);
 
     // Run the reference and given solutions.
-    moveAndSpread_reference(A, B_ref, N);
+    solution_reference(A, B_ref, N);
     solution_entry(A, B, N);
 
     // Check that the given solution produces the same result as the
@@ -123,7 +121,7 @@ const std::chrono::nanoseconds MAX_BENCH_TIME =
         std::chrono::milliseconds(TIER_TIMEOUT_MS * 2));
 
 struct input_t {
-  const int MAX_N = 1 << 16;
+  const int MAX_N = 1 << 14;
   int N = 0;
   int **A = nullptr;
   int **B = nullptr;
@@ -167,7 +165,7 @@ TEST_CASE("Tiers", "[tier1]") {
 
   ankerl::nanobench::Bench b;
   b.epochs(NUM_EPOCHS);
-  // b.maxEpochTime(MAX_BENCH_TIME);
+  b.warmup(1);
 
   int tier = 1;
   while (true) {
