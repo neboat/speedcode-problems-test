@@ -1,1 +1,3 @@
-__attribute__((weak)) void solution_entry(const int *const *A, int **B, int N);
+#include <cstdint>
+
+__attribute__((weak)) void solution_entry(const int *A, int *B, int64_t N);

@@ -18,16 +18,16 @@
 
 #include "./solution.hpp"
 
-static void solution_reference(const int *const *A, int **B, int N) {
-  for (int i = 0; i < N; i++) {
-    for (int j = 0; j < N; j++) {
-      B[i][j] = 0;
-      int x = N - j - 1;
-      int y = N - i - 1;
-      for (int ii = x - 1; ii <= x + 1; ii += 2) {
-        for (int jj = y - 1; jj <= y + 1; jj += 2) {
+static void solution_reference(const int *A, int *B, int64_t N) {
+  for (int64_t i = 0; i < N; i++) {
+    for (int64_t j = 0; j < N; j++) {
+      B[i * N + j] = 0;
+      int64_t x = N - j - 1;
+      int64_t y = N - i - 1;
+      for (int64_t ii = x - 1; ii <= x + 1; ii += 2) {
+        for (int64_t jj = y - 1; jj <= y + 1; jj += 2) {
           if (0 <= ii && ii < N && 0 <= jj && jj < N) {
-            B[i][j] += A[ii][jj];
+            B[i * N + j] += A[ii * N + jj];
           }
         }
       }
@@ -46,10 +46,10 @@ static void fast_input(std::FILE *fp, int *int_input) {
   }
 }
 
-static void readInput(std::FILE *fp, int N, int **A) {
-  for (int i = 0; i < N; i++) {
-    for (int j = 0; j < N; j++) {
-      fast_input(fp, &A[i][j]);
+static void readInput(std::FILE *fp, int64_t N, int *A) {
+  for (int64_t i = 0; i < N; i++) {
+    for (int64_t j = 0; j < N; j++) {
+      fast_input(fp, &A[i * N + j]);
     }
   }
 }
@@ -70,19 +70,19 @@ TEST_CASE("Correctness", "[correctness]") {
     REQUIRE(fp);
 
     // Get the matrix size from the input file.
-    int N;
-    fscanf(fp, "%d", &N);
+    int64_t N;
+    fscanf(fp, "%ld", &N);
 
     // Allocate matrices.
-    int **A, **B, **B_ref;
-    A = new int*[N];
-    B = new int*[N];
-    B_ref = new int*[N];
-    for (int i = 0; i < N; ++i) {
-      A[i] = new int[N];
-      B[i] = new int[N];
-      B_ref[i] = new int[N];
-    }
+    int *A, *B, *B_ref;
+    A = new int[N*N];
+    B = new int[N*N];
+    B_ref = new int[N*N];
+    // for (int i = 0; i < N; ++i) {
+    //   A[i] = new int[N];
+    //   B[i] = new int[N];
+    //   B_ref[i] = new int[N];
+    // }
 
     // Read the input matrix
     readInput(fp, N, A);
@@ -95,19 +95,19 @@ TEST_CASE("Correctness", "[correctness]") {
 
     // Check that the given solution produces the same result as the
     // reference.
-    for (int i = 0; i < N; ++i) {
-      for (int j = 0; j < N; ++j) {
-	CAPTURE(i, j, B_ref[i][j], B[i][j]);
-	REQUIRE(B_ref[i][j] == B[i][j]);
+    for (int64_t i = 0; i < N; ++i) {
+      for (int64_t j = 0; j < N; ++j) {
+	CAPTURE(i, j, B_ref[i * N + j], B[i * N + j]);
+	REQUIRE(B_ref[i * N + j] == B[i * N + j]);
       }
     }
 
     // Free the matrices.
-    for (int i = 0; i < N; ++i) {
-      delete[] A[i];
-      delete[] B[i];
-      delete[] B_ref[i];
-    }
+    // for (int i = 0; i < N; ++i) {
+    //   delete[] A[i];
+    //   delete[] B[i];
+    //   delete[] B_ref[i];
+    // }
     delete[] A;
     delete[] B;
     delete[] B_ref;
@@ -121,33 +121,33 @@ const std::chrono::nanoseconds MAX_BENCH_TIME =
         std::chrono::milliseconds(TIER_TIMEOUT_MS * 2));
 
 struct input_t {
-  const int MAX_N = 1 << 13;
-  int N = 0;
-  int **A = nullptr;
-  int **B = nullptr;
+  const int MAX_N = 1 << 14;
+  int64_t N = 0;
+  int *A = nullptr;
+  int *B = nullptr;
 
-  input_t(int _N = 32) : N(_N) {
+  input_t(int64_t _N = 32) : N(_N) {
     std::random_device dev;
     ankerl::nanobench::Rng rng(dev());
     std::uniform_int_distribution<int> distrib(0, 999);
 
-    A = new int*[MAX_N];
-    B = new int*[MAX_N];
-    for (int i = 0; i < MAX_N; ++i) {
-      A[i] = new int[MAX_N];
-      B[i] = new int[MAX_N];
+    A = new int[MAX_N * MAX_N];
+    B = new int[MAX_N * MAX_N];
+    for (int64_t i = 0; i < MAX_N; ++i) {
+      // A[i] = new int[MAX_N];
+      // B[i] = new int[MAX_N];
 
       // Randomly initialize A.
-      for (int j = 0; j < MAX_N; ++j) {
-	A[i][j] = distrib(rng);
+      for (int64_t j = 0; j < MAX_N; ++j) {
+	A[i * N + j] = distrib(rng);
       }
     }
   }
   ~input_t() {
-    for (int i = 0; i < MAX_N; ++i) {
-      delete[] A[i];
-      delete[] B[i];
-    }
+    // for (int i = 0; i < MAX_N; ++i) {
+    //   delete[] A[i];
+    //   delete[] B[i];
+    // }
     delete[] A;
     delete[] B;
   }
