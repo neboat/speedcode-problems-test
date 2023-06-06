@@ -161,6 +161,7 @@ TEST_CASE("Tiers", "[tier1]") {
   b.epochs(NUM_EPOCHS);
   b.warmup(1);
 
+  double result_tier = 0.0;
   int tier = 1;
   while (true) {
     b.run(std::to_string(input.N).c_str(), [&]() { input.run(); });
@@ -171,18 +172,25 @@ TEST_CASE("Tiers", "[tier1]") {
 
     if (result > std::chrono::duration<double>(
                      std::chrono::milliseconds(TIER_TIMEOUT_MS))
-                     .count())
+                     .count()) {
+      result_tier = tier - 1;
       break;
+    }
 
     ++tier;
     if (!input.grow_input()) {
       printf("Maximum tier reached!\n");
+      result_tier = tier;
       break;
     }
   }
 
+  // This assertion should never fail, but is included to ensure the
+  // report picks it up (using the -s flag).
+  REQUIRE(result_tier);
+
   ankerl::nanobench::render(
-      "{{#result}} {{title}} {{median(elapsed)}} {{median(pagefaults)}} "
+      "{{#result}} {{title}} {{name}} {{median(elapsed)}} {{median(pagefaults)}} "
       "{{median(branchinstructions)}} {{median(branchmisses)}}\n",
       b, std::cout);
   std::string filename{"tier1.json"};
