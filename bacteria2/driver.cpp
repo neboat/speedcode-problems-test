@@ -263,13 +263,21 @@ struct input_t {
   }
 };
 
-TEST_CASE("Tiers", "[tier1]") {
-  input_t input;
+// General method for measuring performance tiers.
+//
+// The template type IN_T must be a constructible object that supports
+// grow_input(), to increase the input size for the next tier, and
+// run(), to run solution_entry() on the current tier's input.
+template <typename IN_T> void measure_tiers() {
+  IN_T input;
 
   ankerl::nanobench::Bench b;
   b.epochs(NUM_EPOCHS);
   b.warmup(1);
 
+  const double target =
+      std::chrono::duration<double>(std::chrono::milliseconds(TIER_TIMEOUT_MS))
+          .count();
   double result_tier = 0.0;
   int tier = 1;
   while (true) {
@@ -279,10 +287,12 @@ TEST_CASE("Tiers", "[tier1]") {
     double result =
         results[tier - 1].median(ankerl::nanobench::Result::Measure::elapsed);
 
-    if (result > std::chrono::duration<double>(
-                     std::chrono::milliseconds(TIER_TIMEOUT_MS))
-                     .count()) {
+    if (result > target) {
       result_tier = tier - 1;
+      // Add some fractional tier based on how close this running time
+      // is to the next tier.
+      double overhead = target / result;
+      result_tier += (overhead * overhead);
       break;
     }
 
@@ -305,4 +315,8 @@ TEST_CASE("Tiers", "[tier1]") {
   std::string filename{"tier1.json"};
   std::fstream s{filename, s.trunc | s.in | s.out};
   ankerl::nanobench::render(ankerl::nanobench::templates::json(), b, s);
+}
+
+TEST_CASE("Tiers", "[tier1]") {
+  measure_tiers<input_t>();
 }
