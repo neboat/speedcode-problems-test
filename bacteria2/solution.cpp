@@ -1,7 +1,7 @@
 #include "solution.hpp"
 #include <cilk/cilk.h>
 
-void solution_entry(const int *A, int *B, int64_t N) {
+void solution_entry(const int *__restrict__ A, int *__restrict__ B, int64_t N) {
   for (int64_t i = 0; i < N; i++) {
     for (int64_t j = 0; j < N; j++) {
       B[i * N + j] = 0;

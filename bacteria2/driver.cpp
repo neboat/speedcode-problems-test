@@ -18,7 +18,8 @@
 
 #include "./solution.hpp"
 
-static void solution_reference(const int *A, int *B, int64_t N) {
+static void solution_reference(const int *__restrict__ A, int *__restrict__ B,
+                               int64_t N) {
   for (int64_t i = 0; i < N; i++) {
     for (int64_t j = 0; j < N; j++) {
       B[i * N + j] = 0;
@@ -77,6 +78,9 @@ static void readInput_buffer(const char *buffer, int64_t N, int *A) {
   }
 }
 
+// Test inputs for correctness checking.  These inputs are inlined
+// here, because the existing job-running infrastructure does not
+// support reading custom input files.
 const std::string test1 = R"(
 2 
 805 378 
@@ -214,6 +218,8 @@ TEST_CASE("Correctness", "[correctness]") {
   }
 }
 
+// Custom structure for setting up performance tiers for the
+// measure_tiers() method.
 struct input_t {
   const int MAX_N = 1 << 13;
   int64_t N = 0;
@@ -266,8 +272,9 @@ const int NUM_EPOCHS = 3;
 
 // General method for measuring performance tiers.
 //
-// The template type IN_T must be a constructible object that supports
-// the following methods:
+// The template type IN_T must be a default-constructible object that
+// supports the following methods:
+//
 // - grow_input(): Increase the input size for the next tier.
 // - current_size_description: Get an std::string describing this tier.
 // - run: Run solution_entry() on the current tier's input.
