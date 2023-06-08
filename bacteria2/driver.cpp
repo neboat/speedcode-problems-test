@@ -214,12 +214,6 @@ TEST_CASE("Correctness", "[correctness]") {
   }
 }
 
-const int TIER_TIMEOUT_MS = 200;
-const int NUM_EPOCHS = 3;
-const std::chrono::nanoseconds MAX_BENCH_TIME =
-    std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::milliseconds(TIER_TIMEOUT_MS * 2));
-
 struct input_t {
   const int MAX_N = 1 << 13;
   int64_t N = 0;
@@ -246,6 +240,10 @@ struct input_t {
     delete[] B;
   }
 
+  std::string current_size_description() const {
+    return std::to_string(N);
+  }
+
   bool grow_input() {
     N *= 2;
     return N <= MAX_N;
@@ -263,11 +261,16 @@ struct input_t {
   }
 };
 
+const int TIER_TIMEOUT_MS = 200;
+const int NUM_EPOCHS = 3;
+
 // General method for measuring performance tiers.
 //
 // The template type IN_T must be a constructible object that supports
-// grow_input(), to increase the input size for the next tier, and
-// run(), to run solution_entry() on the current tier's input.
+// the following methods:
+// - grow_input(): Increase the input size for the next tier.
+// - current_size_description: Get an std::string describing this tier.
+// - run: Run solution_entry() on the current tier's input.
 template <typename IN_T> void measure_tiers() {
   IN_T input;
 
@@ -281,7 +284,7 @@ template <typename IN_T> void measure_tiers() {
   double result_tier = 0.0;
   int tier = 1;
   while (true) {
-    b.run(std::to_string(input.N).c_str(), [&]() { input.run(); });
+    b.run(input.current_size_description().c_str(), [&]() { input.run(); });
 
     const std::vector<ankerl::nanobench::Result> results = b.results();
     double result =
@@ -298,7 +301,7 @@ template <typename IN_T> void measure_tiers() {
 
     ++tier;
     if (!input.grow_input()) {
-      printf("Maximum tier reached!\n");
+      REQUIRE("Maximum tier reached!");
       result_tier = tier;
       break;
     }
