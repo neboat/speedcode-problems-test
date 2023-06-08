@@ -96,7 +96,6 @@ const uint8_t* original_solution_tier4(uint8_t needle, const uint8_t* start, con
 }
 
 
-// TEST_CASE("Tiers", "[correctness],[tier1]") {
 TEST_CASE("Correctness", "[correctness]") {
   size_t N = 10000*16;
   std::vector<uint8_t> data(N);
@@ -104,62 +103,24 @@ TEST_CASE("Correctness", "[correctness]") {
   size_t range = 4096;
   for (int i = 0; i < N; i++) {
      data[i] = rng.bounded(256);
-     //if (rng.bounded(range) == 0 ) {
-     //  data[i] = 0;
-     //}
-     //if (i == N/2) data[i] = 0;
   }
   auto reference = original_solution_tier1;
-  // auto solution = original_solution_tier2;
-  // auto solution2 = original_solution_tier3;
-  // auto solution3 = original_solution_tier4;
   auto solution4 = solution_entry;
 
   for (int i = 0; i < 1024; i++) {
-    size_t offset = 16*rng.bounded(N / 16);
-    auto ret_ref = reference(0, (&data[0])+offset, std::min((&data[0]) + range, (&data[0]) + data.size()));
-    auto ret_sol = solution_entry(0, (&data[0])+offset, std::min((&data[0]) + range, (&data[0]) + data.size()));
-    // auto ret_sol = solution(0, (&data[0])+offset, std::min((&data[0]) + range,(&data[0]) + data.size()));
-    // auto ret_sol2 = solution2(0, (&data[0])+offset, std::min((&data[0]) + range, (&data[0])+data.size()));
-    // auto ret_sol3 = solution3(0, (&data[0])+offset, std::min((&data[0]) + range, (&data[0]) + data.size()));
+    size_t offset = 16 * rng.bounded(N / 16);
+    auto ret_ref =
+        reference(0, (&data[0]) + offset,
+                  std::min((&data[0]) + range, (&data[0]) + data.size()));
+    auto ret_sol =
+        solution_entry(0, (&data[0]) + offset,
+                       std::min((&data[0]) + range, (&data[0]) + data.size()));
     REQUIRE(ret_ref == ret_sol);
-    // REQUIRE(ret_sol == ret_sol2);
-    // REQUIRE(ret_sol2 == ret_sol3);
   }
-
-
-
-  // auto bencher = ankerl::nanobench::Bench().epochs(10).minEpochIterations(2).performanceCounters(true).relative(true).minEpochTime(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(200))).run("Tier0", [&] {
-  //                       size_t offset = 16*rng.bounded(N/16);
-  // 			auto ret = reference(0, (&data[0])+offset, std::min((&data[0]) + offset + range, (&data[0]) +data.size()));
-
-  // 		});
-  // bencher.run("Tier1", [&] {
-  // 		        size_t offset = 16*rng.bounded(N/16);
-  // 			auto ret = solution(0, (&data[0])+offset, std::min((&data[0]) + offset + range, (&data[0]) + data.size()));
-  // 			          });
-  // bencher.run("Tier2", [&] {
-  // 		        size_t offset = 16*rng.bounded(N/16);
-  // 			auto ret = solution2(0, (&data[0])+offset, std::min((&data[0]) + offset + range, (&data[0]) + data.size()));
-  // 			          });
-  // bencher.run("Tier3", [&] {
-  // 		        size_t offset = 16*rng.bounded(N/16);
-  // 			auto ret = solution3(0, (&data[0])+offset, std::min((&data[0]) + offset + range, (&data[0]) + data.size()));
-  // 			          });
-  // bencher.run("Submission", [&] {
-  // 		        size_t offset = 16*rng.bounded(N/16);
-  // 			auto ret = solution4(0, (&data[0])+offset, std::min((&data[0]) + offset + range, (&data[0]) + data.size()));
-  // 			          });
-
-  // auto results = bencher.results();
-
-  // std::vector<double> runtimes;
-  // for (int i = 0; i < results.size(); i++) {
-  //    runtimes.push_back(results[i].average(ankerl::nanobench::Result::Measure::elapsed));
-  // }
-  // REQUIRE(runtimes[0]/runtimes[1] >= 0.95);
 }
 
+// Custom structure for setting up performance tiers for the
+// measure_tiers() method.
 struct input_t {
   const size_t N = 1 << 28;
   std::vector<uint8_t> data;
@@ -171,7 +132,7 @@ struct input_t {
 
   input_t(size_t _range = 4096, int _iters = 4096)
       : data(N), range(_range), iters(_iters), rng(dev()) {
-    // Randomly initialize data.
+    // Initialize the data with random nonzero values.
     for (size_t i = 0; i < N; ++i) {
       data[i] = 1 + rng.bounded(255);
     }
@@ -194,20 +155,14 @@ struct input_t {
     for (int i = 0; i < iters; ++i) {
       size_t offset = 16 * rng.bounded((N - range) / 16);
 
-      // Set a zero in the upper part of the range.
-      size_t zero_loc = range - 1 - rng.bounded(range / 2);
+      // Set a zero byte within the range.
+      size_t zero_loc = rng.bounded(range);
       uint8_t saved = data[offset + zero_loc];
       data[offset + zero_loc] = 0;
 
       const uint8_t *result =
           solution_entry(0, (&data[0]) + offset, (&data[0]) + offset + range);
 
-      // printf("%p--%p\n", (const uint8_t *)(&data[0]) + offset, (const uint8_t *)(&data[0]) + offset + range);
-      // const uint8_t *result = original_solution_tier4(
-      //     0, (&data[0]) + offset, (&data[0]) + offset + range);
-      // printf("%p--%p, %p\n", (const uint8_t *)(&data[0]) + offset, (const uint8_t *)(&data[0]) + offset + range,
-      // 	     result);
-      // REQUIRE((result - (const uint8_t *)(&data[offset])) == zero_loc);
       data[offset + zero_loc] = saved;
     }
   }
@@ -218,8 +173,9 @@ const int NUM_EPOCHS = 3;
 
 // General method for measuring performance tiers.
 //
-// The template type IN_T must be a constructible object that supports
-// the following methods:
+// The template type IN_T must be a default-constructible object that
+// supports the following methods:
+//
 // - grow_input(): Increase the input size for the next tier.
 // - current_size_description: Get an std::string describing this tier.
 // - run: Run solution_entry() on the current tier's input.
