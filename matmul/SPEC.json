@@ -1,0 +1,10 @@
+{"name":"Matrix multiplication",
+"const_id":"matmul",
+"title":"Matrix multiplication",
+"location":"matmul",
+"github_url":"https://github.com/neboat/speedcode-problems-test.git",
+"short_description":"Multiply two matrices of floats.",
+"max_tiers":1,
+"tier_benchmark":"[tier1]",
+"public":true,
+"tags":"#sequential-code,#parallel-code"}
