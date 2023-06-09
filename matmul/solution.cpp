@@ -8,7 +8,7 @@ void solution_entry(float *__restrict__ C, const float *__restrict__ A,
     for (int64_t j = 0; j < n; ++j) {
       C[i * n + j] = 0;
       for (int64_t k = 0; k < l; ++k) {
-	C[i * n + j] += A[i * l + k] * B[k * n + j];
+        C[i * n + j] += A[i * l + k] * B[k * n + j];
       }
     }
   }
