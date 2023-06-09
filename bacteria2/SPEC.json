@@ -2,7 +2,7 @@
 "const_id":"bacteria",
 "title":"Bacteria",
 "location":"bacteria2",
-"github_url":"git@github.com:neboat/speedcode-problems-test.git",
+"github_url":"git@github.com:SpeedCodeOrg/speedcode-problems.git",
 "short_description":"Compute where the bacteria will spread.",
 "max_tiers":1,
 "tier_benchmark":"[tier1]",
