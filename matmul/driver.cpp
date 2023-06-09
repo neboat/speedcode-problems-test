@@ -70,11 +70,11 @@ struct input_t {
   bool grow_input() {
     const int64_t min_dim = std::min(std::min(m, n), l);
     if (m == min_dim)
-      m = m * 13 / 10;
+      m = m * 16 / 10;
     else if (n == min_dim)
-      n = n * 13 / 10;
+      n = n * 16 / 10;
     else
-      l = l * 13 / 10;
+      l = l * 16 / 10;
 
     if (m > MAX_DIM || n > MAX_DIM || l > MAX_DIM)
       return false;
